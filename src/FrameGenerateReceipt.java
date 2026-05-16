@@ -6,7 +6,7 @@ public class FrameGenerateReceipt {
     public FrameGenerateReceipt() {
 
         //frame
-        JFrame frame = new JFrame("Generate Receipt");
+        JFrame frame = new JFrame("Generate Receipt Frame");
         frame.setSize(600, 700);
         frame.setLayout(null);
 

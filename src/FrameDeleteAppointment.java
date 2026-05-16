@@ -17,7 +17,7 @@ public class FrameDeleteAppointment {
         title.setForeground(new Color(0x2d6a4f));
         title.setBounds(120, 10, 400, 50);
 
-        JLabel l1 = new JLabel("Appointment ID:");
+        JLabel l1 = new JLabel("Customer ID:");
         l1.setBounds(100, 80, 150, 30);
 
         //textfield
