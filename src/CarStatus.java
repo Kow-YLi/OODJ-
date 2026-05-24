@@ -143,32 +143,26 @@ public class CarStatus extends JFrame {
         String appointmentFile = "data/appointments.txt";
         File file = new File(appointmentFile);
 
-        if (!file.exists()) {
-            try {
-                new File("data").mkdirs();
-                try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-                    bw.write("APT0921:" + userId + ":2026-01-15:1130:Tyre Replacement:Completed\n");
-                    bw.write("APT1001:" + userId + ":2026-05-20:1030:Oil Change:Assigned\n");
-                    bw.write("APT1002:" + userId + ":2026-06-05:1600:Brake Repair:Pending\n");
-                }
-            } catch (IOException e) { 
-                e.printStackTrace(); 
-            }
+        File dataDir = new File("data");
+        if (!dataDir.exists()) {
+            dataDir.mkdirs();
         }
 
         List<String[]> filteredList = new ArrayList<>();
         
-        try (BufferedReader br = new BufferedReader(new FileReader(appointmentFile))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(":", 6);
-                
-                if (parts.length >= 6 && parts[1].equals(userId)) {
-                    filteredList.add(parts);
+        if (file.exists()) {
+            try (BufferedReader br = new BufferedReader(new FileReader(appointmentFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":", 6);
+                    
+                    if (parts.length >= 6 && parts[1].equals(userId)) {
+                        filteredList.add(parts);
+                    }
                 }
+            } catch (IOException e) { 
+                System.err.println("Error reading appointments: " + e.getMessage());
             }
-        } catch (IOException e) { 
-            e.printStackTrace(); 
         }
 
         if (filteredList.isEmpty()) {

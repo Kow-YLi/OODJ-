@@ -48,22 +48,7 @@ public class ServiceHistory extends JFrame {
 
     private void loadData() {
         String username = customer.getUsername();
-
-        File dataDir = new File("data");
-        if (!dataDir.exists()) dataDir.mkdirs();
-
-        initializeFileWithDefaults("data/services.txt", 
-            "S001:" + username + ":2024-03-10:Major Service:450.00\n" +
-            "S002:" + username + ":2024-04-15:Oil Change:120.00");
-            
-        initializeFileWithDefaults("data/payments.txt", 
-            "P001:" + username + ":2024-03-11:450.00:Credit Card\n" +
-            "P002:" + username + ":2024-04-15:120.00:Cash");
-            
-        initializeFileWithDefaults("data/feedbacks.txt", 
-            "S001:" + username + ":5:Excellent work, very professional!\n" +
-            "S002:" + username + ":4:Fast service, but the lounge was crowded.");
-
+        
         try (BufferedReader br = new BufferedReader(new FileReader("data/services.txt"))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -72,7 +57,9 @@ public class ServiceHistory extends JFrame {
                     allServiceRecords.add(new ServiceRecord(parts[0], parts[2], parts[3], parts[4]));
                 }
             }
-        } catch (IOException e) { System.err.println("Error reading services."); }
+        } catch (IOException e) { 
+            System.err.println("Error reading services: " + e.getMessage());
+        }
 
         try (BufferedReader br = new BufferedReader(new FileReader("data/payments.txt"))) {
             String line;
@@ -82,7 +69,9 @@ public class ServiceHistory extends JFrame {
                     allPaymentRecords.add(new PaymentRecord(parts[0], parts[2], parts[3], parts[4]));
                 }
             }
-        } catch (IOException e) { System.err.println("Error reading payments."); }
+        } catch (IOException e) { 
+            System.err.println("Error reading payments: " + e.getMessage());
+        }
 
         try (BufferedReader br = new BufferedReader(new FileReader("data/feedbacks.txt"))) {
             String line;
@@ -92,17 +81,8 @@ public class ServiceHistory extends JFrame {
                     allFeedbacks.add(new FeedbackRecord(parts[0], parts[2], parts[3]));
                 }
             }
-        } catch (IOException e) { System.err.println("Error reading feedback."); }
-    }
-
-    private void initializeFileWithDefaults(String filePath, String sampleContent) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-                bw.write(sampleContent);
-            } catch (IOException e) {
-                System.err.println("Could not create " + filePath);
-            }
+        } catch (IOException e) { 
+            System.err.println("Error reading feedback: " + e.getMessage());
         }
     }
 
@@ -284,7 +264,7 @@ public class ServiceHistory extends JFrame {
         p.setBackground(Color.WHITE);
         
         if (target != null) {
-            p.add(new JLabel("<html><b>" + serviceType + "</b><br>Rating: " + target.rating + "/5</html>"), BorderLayout.NORTH);
+            p.add(new JLabel("<html><b>" + serviceType + "</b></html>"), BorderLayout.NORTH);
             JTextArea area = new JTextArea(target.comment);
             area.setEditable(false);
             area.setLineWrap(true);

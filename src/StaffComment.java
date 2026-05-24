@@ -190,35 +190,31 @@ public class StaffComment extends JFrame {
         allComments.clear();
         
         File file = new File(FILE_PATH);
+       
         File dir = new File("data");
-        if (!dir.exists()) dir.mkdirs();
-
-        if (!file.exists()) {
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(file))) {
-                bw.write(customer.getUsername() + ":APT1001:5:Great service, car feels brand new!:2024-02-15\n");
-                bw.write(customer.getUsername() + ":APT0988:4:Staff were polite but the lounge was cold.:2024-01-10\n");
-            } catch (IOException e) {
-                System.err.println("Could not create sample comments.");
-            }
+        if (!dir.exists()) {
+            dir.mkdirs();
         }
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(":");
-                if (parts.length >= 5 && parts[0].equals(customer.getUsername())) {
-                    allComments.add(parts);
-                    String ratingStars = getRatingStars(Integer.parseInt(parts[2]));
-                    commentsModel.addRow(new Object[]{
-                        parts[1], 
-                        ratingStars, 
-                        parts[4],
-                        "<html><u>View Comment</u></html>"
-                    });
+        if (file.exists()) {
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length >= 5 && parts[0].equals(customer.getUsername())) {
+                        allComments.add(parts);
+                        String ratingStars = getRatingStars(Integer.parseInt(parts[2]));
+                        commentsModel.addRow(new Object[]{
+                            parts[1], 
+                            ratingStars, 
+                            parts[4],
+                            "<html><u>View Comment</u></html>"
+                        });
+                    }
                 }
+            } catch (IOException e) {
+                System.err.println("Error loading comments: " + e.getMessage());
             }
-        } catch (IOException e) {
-            System.err.println("Error loading comments.");
         }
         
         if (commentsModel.getRowCount() == 0) {
