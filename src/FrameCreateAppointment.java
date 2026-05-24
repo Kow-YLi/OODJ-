@@ -1,5 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 public class FrameCreateAppointment {
@@ -20,7 +24,7 @@ public class FrameCreateAppointment {
 
         JLabel l1 = new JLabel("Customer ID:");
         JLabel l2 = new JLabel("Date (yyyy-MM-dd):");
-        JLabel l3 = new JLabel("Time (HH:mm):");
+        JLabel l3 = new JLabel("Time (HHmm):");
         JLabel l4 = new JLabel("Service:");
 
         l1.setBounds(100, 80, 150, 30);
@@ -66,24 +70,29 @@ public class FrameCreateAppointment {
                 return;
             }
 
-            int cusId;
-
-            //validate cusID
-            try {
-                cusId = Integer.parseInt(t1.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Customer ID must be a number!");
-                return;
-            }
+            String cusId = t1.getText().trim();
 
             //find customer
             CreateCustomer selectedCustomer = null;
 
-            for (CreateCustomer c : DataStored.customers) {
-                if (c.cus_id == cusId) {
-                    selectedCustomer = c;
-                    break;
+            try (BufferedReader br = new BufferedReader(new FileReader("data/customers.txt"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length >= 5 && parts[0].trim().equals(cusId)) {
+                        selectedCustomer = new CreateCustomer(
+                            parts[0].trim(), // ID
+                            parts[1].trim(), // Password
+                            parts[2].trim(), // Name
+                            parts[3].trim(), // Email
+                            parts[4].trim()  // Phone
+                        );
+                        break;
+                    }
                 }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error reading customer file!");
+                return;
             }
 
             if (selectedCustomer == null) {
@@ -91,29 +100,77 @@ public class FrameCreateAppointment {
                 return;
             }
 
-            //parse date + time
             LocalDateTime dateTime;
+            String rawTime = t3.getText().trim();
 
-            try {
-                dateTime = LocalDateTime.parse(t2.getText() + "T" + t3.getText());
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid date/time format!");
+            if (rawTime.length() != 4) {
+                JOptionPane.showMessageDialog(frame, "Invalid time length! Please enter exactly 4 digits (e.g., 1820).");
                 return;
             }
 
-            //assign appID automatically 
-            int appId = DataStored.nextAppId++;
+            try {
+                String formattedJavaTime = rawTime.substring(0, 2) + ":" + rawTime.substring(2, 4);
+                dateTime = LocalDateTime.parse(t2.getText().trim() + "T" + formattedJavaTime);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(frame, "Invalid date/time format validation failed!");
+                return;
+            }
+
+            int maxId = 1000;
+            try (BufferedReader br = new BufferedReader(new FileReader("data/appointments.txt"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length > 0 && parts[0].startsWith("A")) {
+                        try {
+                            int idNum = Integer.parseInt(parts[0].substring(1).trim());
+                            if (idNum > maxId) {
+                                maxId = idNum;
+                            }
+                        } catch (NumberFormatException ignored) {}
+                    }
+                }
+            } catch (IOException ignored) {}
+
+            String appId = String.format("A%04d", maxId + 1);
 
             //create appointment
             CreateAppointment appointment = new CreateAppointment(
                     selectedCustomer,
-                    appId,
+                    appId,  
                     t4.getText(),
                     "pending",
                     dateTime
             );
 
-            DataStored.appointments.add(appointment);
+            String techId = "None";
+            try (BufferedReader brTech = new BufferedReader(new FileReader("data/technician.txt"))) {
+                String techLine = brTech.readLine();
+                if (techLine != null) {
+                    String[] techParts = techLine.split(":");
+                    if (techParts.length > 0) {
+                        techId = techParts[0].trim();
+                    }
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error reading technician file!");
+                return;
+            }
+
+            appointment.tech_id = techId;
+
+            try (FileWriter fw = new FileWriter("data/appointments.txt", true)) {
+                String appTimeStr = t2.getText().trim() + " " + rawTime;
+                fw.write(appointment.app_id + ":" + 
+                         appointment.customer.cus_id + ":" + 
+                         appointment.app_service_type + ":" + 
+                         appointment.app_status + ":" + 
+                         appTimeStr + ":" + 
+                         appointment.tech_id + "\n");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error saving appointment file!");
+                return;
+            }
 
             JOptionPane.showMessageDialog(frame,
                     """
@@ -121,7 +178,7 @@ public class FrameCreateAppointment {
                     Customer ID: """ + cusId +
                     "\nAppointment ID: " + appId +
                     "\nDate: " + t2.getText() +
-                    "\nTime: " + t3.getText() +
+                    "\nTime: " + rawTime +
                     "\nService: " + t4.getText()
             );
         });

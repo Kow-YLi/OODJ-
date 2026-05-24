@@ -24,9 +24,8 @@ public class FrameManageAppointment {
         view.setFont(new Font("Monospaced", Font.BOLD, 15));
         view.setBackground (new Color (0xcce7c9));
         view.addActionListener(e -> {
-        new FrameViewAppointment();
+            new FrameViewAppointment();
         });
-
 
         JButton delete = new JButton("Delete Appointment");
         delete.setFont(new Font("Monospaced", Font.BOLD, 15));
@@ -35,22 +34,15 @@ public class FrameManageAppointment {
             new FrameDeleteAppointment();
         });
 
-        create.setBounds(120,200,350,35);
+        create.setBounds(120, 200, 350, 35);
         view.setBounds(120, 250, 350, 35);
         delete.setBounds(120, 300, 350, 35);
 
         frame.add(create);
-        frame.add(delete);
         frame.add(view);
+        frame.add(delete);
 
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-    
-    
-    
-    
-    
     }
-    
 }

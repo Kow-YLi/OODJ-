@@ -49,7 +49,7 @@ public class CarStatus extends JFrame {
             try {
                 LocalDate appointmentDate = LocalDate.parse(dateStr);
                 
-                if (!appointmentDate.isBefore(today)) {
+                if (!appointmentDate.isBefore(today) && !status.equalsIgnoreCase("Completed")) {
                     activeBookingsList.add(rowData[i]);
                 }
             } catch (Exception ex) {
@@ -92,7 +92,7 @@ public class CarStatus extends JFrame {
         notiLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
         notiPanel.add(notiLabel, BorderLayout.CENTER);
 
-        String[] columns = {"Appt ID", "Car Model", "Plate Number", "Date", "Booking Time", "Service Item", "Status"};
+        String[] columns = {"Appointment ID", "Car Model", "Plate Number", "Date", "Booking Time", "Service Item", "Status"};
         
         DefaultTableModel model = new DefaultTableModel(rowData, columns) {
             @Override 
@@ -154,9 +154,9 @@ public class CarStatus extends JFrame {
             try (BufferedReader br = new BufferedReader(new FileReader(appointmentFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] parts = line.split(":", 6);
+                    String[] parts = line.split(":");
                     
-                    if (parts.length >= 6 && parts[1].equals(userId)) {
+                    if (parts.length >= 5 && parts[1].trim().equals(userId)) {
                         filteredList.add(parts);
                     }
                 }
@@ -172,13 +172,34 @@ public class CarStatus extends JFrame {
         Object[][] data = new Object[filteredList.size()][7];
         for (int i = 0; i < filteredList.size(); i++) {
             String[] row = filteredList.get(i);
-            data[i][0] = row[0];
-            data[i][1] = model;
-            data[i][2] = plate;
-            data[i][3] = row[2];
-            data[i][4] = row[3];
-            data[i][5] = row[4];
-            data[i][6] = row[5];
+            
+            data[i][0] = row[0].trim(); // Appointment ID
+            data[i][1] = model;        
+            data[i][2] = plate;       
+            
+
+            String rawDateTime = row[4].trim(); 
+            String datePart = "";
+            String timePart = "";
+            
+            if (rawDateTime.contains(" ")) {
+                String[] dtParts = rawDateTime.split(" ");
+                datePart = dtParts[0].trim(); 
+                String rawTime = dtParts[1].trim(); 
+
+                if (rawTime.length() == 4) {
+                    timePart = rawTime.substring(0, 2) + ":" + rawTime.substring(2, 4);
+                } else {
+                    timePart = rawTime;
+                }
+            } else {
+                datePart = rawDateTime;
+            }
+
+            data[i][3] = datePart;        
+            data[i][4] = timePart;          
+            data[i][5] = row[2].trim();     
+            data[i][6] = row[3].trim();     
         }
         return data;
     }

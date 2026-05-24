@@ -1,5 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrameCollectPayment {
 
@@ -14,7 +17,7 @@ public class FrameCollectPayment {
         //label
         JLabel title = new JLabel("Collect Payment");
         title.setFont(new Font("Arial", Font.BOLD, 20));
-        title.setForeground( new Color (0x2d6a4f));
+        title.setForeground(new Color(0x2d6a4f));
         title.setBounds(200, 30, 300, 30);
         frame.add(title);
 
@@ -58,50 +61,104 @@ public class FrameCollectPayment {
                 return;
             }
 
-            int appId;
+            String appIdInput = t1.getText().trim();
             double amount;
 
             try {
-                appId = Integer.parseInt(t1.getText());
-                amount = Double.parseDouble(t2.getText());
+                amount = Double.parseDouble(t2.getText().trim());
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Invalid number format!");
+                JOptionPane.showMessageDialog(frame, "Invalid number format for Amount!");
                 return;
             }
 
-            String method = t3.getText();
+            String method = t3.getText().trim();
 
-            CreateAppointment selected = null;
+            File appointmentFile = new File("data/appointments.txt");
+            if (!appointmentFile.exists()) {
+                JOptionPane.showMessageDialog(frame, "Database error: Appointments ledger file not found!");
+                return;
+            }
 
-            for (CreateAppointment a : DataStored.appointments) {
-                if (a.app_id == appId) {
-                    selected = a;
-                    break;
+            List<String> appointmentLines = new ArrayList<>();
+            boolean appointmentUpdated = false;
+            String matchedLineDetails = "";
+
+            // Step 1: Scan and update the status inside appointments.txt file
+            try (BufferedReader br = new BufferedReader(new FileReader(appointmentFile))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] parts = line.split(":");
+                    if (parts.length >= 6 && parts[0].trim().equalsIgnoreCase(appIdInput)) {
+                        // Layout: ID:CusID:Service:Status:Timestamp:TechID
+                        parts[3] = "PAID"; 
+                        String updatedLine = String.join(":", parts);
+                        appointmentLines.add(updatedLine);
+                        appointmentUpdated = true;
+                        matchedLineDetails = line;
+                    } else {
+                        appointmentLines.add(line);
+                    }
                 }
-            }
-
-            if (selected == null) {
-                JOptionPane.showMessageDialog(frame, "Appointment not found!");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error accessing appointments data storage.");
                 return;
             }
 
-            ManagePayment payment = new ManagePayment(
-                    DataStored.nextPaymentId++,
-                    selected,
-                    amount,
-                    method
-            );
+            if (!appointmentUpdated) {
+                JOptionPane.showMessageDialog(frame, "Appointment ID not found!");
+                return;
+            }
 
-            DataStored.payments.add(payment);
-            selected.app_status = "PAID";
+            // Rewrite appointments ledger with updated PAID flag status
+            try (FileWriter fw = new FileWriter(appointmentFile, false)) {
+                for (String line : appointmentLines) {
+                    fw.write(line + "\n");
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error modifying appointments file status.");
+                return;
+            }
+
+            // Step 2: Auto-calculate tracking ID numbers sequentially by scanning payments log
+            int maxPaymentId = 2000;
+            File paymentFile = new File("data/payments.txt");
+            
+            if (paymentFile.exists()) {
+                try (BufferedReader brPay = new BufferedReader(new FileReader(paymentFile))) {
+                    String line;
+                    while ((line = brPay.readLine()) != null) {
+                        String[] parts = line.split(":");
+                        if (parts.length > 0 && parts[0].startsWith("P")) {
+                            try {
+                                int idNum = Integer.parseInt(parts[0].substring(1).trim());
+                                if (idNum > maxPaymentId) {
+                                    maxPaymentId = idNum;
+                                }
+                            } catch (NumberFormatException ignored) {}
+                        }
+                    }
+                } catch (IOException ignored) {}
+            }
+
+            String nextPaymentIdStr = "P" + (maxPaymentId + 1);
+            String nextReceiptNoStr = "REC" + (maxPaymentId + 5001);
+
+            // Step 3: Append structural billing summary row to data/payments.txt
+            try (FileWriter fwPay = new FileWriter("data/payments.txt", true)) {
+                // Scheme layout format: PaymentID:ReceiptNo:AppointmentID:Amount:PaymentMethod
+                fwPay.write(nextPaymentIdStr + ":" + nextReceiptNoStr + ":" + appIdInput + ":" + amount + ":" + method + "\n");
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error appending entry data into billing data file records.");
+                return;
+            }
 
             JOptionPane.showMessageDialog(frame,
                     "Payment Successful!\n\n" +
-                    "Payment ID: " + payment.payment_id + "\n" +
-                    "Receipt No: " + payment.receipt_no + "\n" +
-                    "Appointment ID: " + payment.appointment.app_id + "\n" +
-                    "Amount: RM " + payment.payment_amount + "\n" +
-                    "Method: " + payment.payment_method
+                    "Payment ID: " + nextPaymentIdStr + "\n" +
+                    "Receipt No: " + nextReceiptNoStr + "\n" +
+                    "Appointment ID: " + appIdInput + "\n" +
+                    "Amount: RM " + amount + "\n" +
+                    "Method: " + method
             );
         });
 

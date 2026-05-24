@@ -1,5 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrameDeleteCustomer {
 
@@ -17,16 +20,16 @@ public class FrameDeleteCustomer {
         title.setForeground(new Color(0x2d6a4f));
         title.setBounds(120, 10, 400, 50);
         
-        JLabel idLabel = new JLabel("Customer ID:"); 
-        idLabel.setBounds(100,80,150,30);
+        JLabel idLabel = new JLabel("ID:"); 
+        idLabel.setBounds(100, 80, 150, 30);
 
         //textfield
         JTextField t1 = new JTextField();
-        t1.setBounds(200,80,200,30);
+        t1.setBounds(200, 80, 200, 30);
 
         //button
         JButton delete = new JButton("Delete");
-        delete.setBounds(180, 150, 90, 30);
+        delete.setBounds(200, 140, 90, 30);
 
         frame.add(title);
         frame.add(idLabel);
@@ -38,35 +41,49 @@ public class FrameDeleteCustomer {
             //empty field check
             if (t1.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(frame,
-                        "Please enter Customer ID!");
+                        "Please enter ID!");
                 return;
             }
 
-            int id;
-
-            //format check
-            try {
-                id = Integer.parseInt(t1.getText());
-            } catch (NumberFormatException ex) {
-
-                JOptionPane.showMessageDialog(frame,
-                        "Customer ID must be a number!");
-                return;
-            }
-
+            String idInput = t1.getText().trim();
             boolean found = false;
+            String[] targetFiles = {"data/customers.txt", "data/staff.txt"};
 
-            //delete customer
-            for (int i = 0; i < DataStored.customers.size(); i++) {
+            for (String filePath : targetFiles) {
+                File file = new File(filePath);
+                if (!file.exists()) continue;
 
-                if (DataStored.customers.get(i).cus_id == id) {
+                List<String> fileLines = new ArrayList<>();
+                boolean fileUpdated = false;
 
-                    DataStored.customers.remove(i);
+                try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] parts = line.split(":");
+                        if (parts.length > 0 && parts[0].trim().equals(idInput)) {
+                            fileUpdated = true;
+                            found = true;
+                        } else {
+                            fileLines.add(line);
+                        }
+                    }
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error reading database file: " + filePath);
+                    return;
+                }
 
+                if (fileUpdated) {
+                    try (FileWriter fw = new FileWriter(file, false)) {
+                        for (String remainingLine : fileLines) {
+                            fw.write(remainingLine + "\n");
+                        }
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(frame, "Error updating database file: " + filePath);
+                        return;
+                    }
+                    
                     JOptionPane.showMessageDialog(frame,
-                            "Customer Deleted Successfully!");
-
-                    found = true;
+                            "Profile Deleted Successfully!");
                     break;
                 }
             }
@@ -74,7 +91,7 @@ public class FrameDeleteCustomer {
             //customer not found
             if (!found) {
                 JOptionPane.showMessageDialog(frame,
-                        "Customer not found!");
+                        "ID not found!");
             }
         });
 

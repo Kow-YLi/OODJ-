@@ -135,7 +135,7 @@ public class ServiceHistory extends JFrame {
 
         JTabbedPane tabbedPane = new JTabbedPane();
         
-        String[] sCols = {"Service ID", "Date", "Service Type", "Amount (RM)", "Feedback"};
+        String[] sCols = {"Appointment ID", "Date", "Service Type", "Amount (RM)", "Feedback"};
         serviceModel = createNonEditableModel(sCols);
         JTable serviceTable = createStyledTable(serviceModel, true);
         

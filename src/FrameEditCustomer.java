@@ -1,5 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrameEditCustomer {
 
@@ -59,35 +62,53 @@ public class FrameEditCustomer {
         return;
     }
 
-    //validate ID
-    int idInput;
+    String idInput = t1.getText().trim();
+    String newName = t2.getText().trim();
+    String newEmail = t3.getText().trim();
+    String newPhone = t4.getText().trim();
 
-    try {
-        idInput = Integer.parseInt(t1.getText());
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(frame,
-            "Error: ID must be a number!",
-            "Input Error",
-            JOptionPane.ERROR_MESSAGE);
-        return;
-    }
-
-    //search customer
     boolean found = false;
+    String[] targetFiles = {"data/customers.txt", "data/staff.txt"};
 
-    for (CreateCustomer c : DataStored.customers) {
-        if (c.cus_id == idInput) {
+    for (String filePath : targetFiles) {
+        File file = new File(filePath);
+        if (!file.exists()) continue;
 
-            c.cus_name = t2.getText();
-            c.cus_email = t3.getText();
-            c.cus_phone = t4.getText();
+        List<String> fileLines = new ArrayList<>();
+        boolean fileUpdated = false;
 
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(":");
+                if (parts.length >= 5 && parts[0].trim().equals(idInput)) {
+                    String password = parts[1].trim();
+                    fileLines.add(parts[0].trim() + ":" + password + ":" + newName + ":" + newEmail + ":" + newPhone);
+                    fileUpdated = true;
+                    found = true;
+                } else {
+                    fileLines.add(line);
+                }
+            }
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(frame, "Error reading database file: " + filePath, "File Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (fileUpdated) {
+            try (FileWriter fw = new FileWriter(file, false)) {
+                for (String updatedLine : fileLines) {
+                    fw.write(updatedLine + "\n");
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error writing to database file: " + filePath, "File Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            
             JOptionPane.showMessageDialog(frame,
                 "Profile Updated Successfully!",
                 "Success",
                 JOptionPane.INFORMATION_MESSAGE);
-
-            found = true;
             break;
         }
     }
@@ -95,7 +116,7 @@ public class FrameEditCustomer {
     //not found error
     if (!found) {
         JOptionPane.showMessageDialog(frame,
-            "Error: Customer ID not found!",
+            "Error: Customer or Staff ID not found!",
             "Not Found",
             JOptionPane.ERROR_MESSAGE);
     }

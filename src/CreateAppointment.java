@@ -3,8 +3,8 @@ import java.time.format.DateTimeFormatter;
 
 public class CreateAppointment {
 
-    public int app_id;
-    public int tech_id;
+    public String app_id;
+    public String tech_id; 
     public String app_service_type;
     public String app_status;
     public LocalDateTime app_time;
@@ -12,7 +12,7 @@ public class CreateAppointment {
     public CreateCustomer customer;
 
     public CreateAppointment(CreateCustomer customer,
-        int app_id,
+        String app_id,
         String app_service_type,
         String app_status,
         LocalDateTime app_time) {
@@ -23,7 +23,7 @@ public class CreateAppointment {
         this.app_status = app_status;
         this.app_time = app_time;
 
-        this.tech_id = -1; 
+        this.tech_id = "None"; 
 
         //calculate duration
         int duration = getDurationHours();
@@ -34,20 +34,20 @@ public class CreateAppointment {
 
     //service duration 
     public int getDurationHours() {
-        if (app_service_type.equalsIgnoreCase("normal")) {
+        String service = app_service_type.toLowerCase();
+        if (service.contains("normal") || service.contains("tyre")) {
             return 1;
         } else {
-            return 3; // major service
+            return 3; 
         }
     }
 
     //assign technician
-    public void assignTechnician(int tech_id) {
+    public void assignTechnician(String tech_id) {
         this.tech_id = tech_id;
         this.app_status = "assigned";
     }
 
-    //display 
     public String display() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 

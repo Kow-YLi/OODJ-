@@ -1,5 +1,11 @@
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FrameDeleteAppointment {
 
@@ -17,7 +23,8 @@ public class FrameDeleteAppointment {
         title.setForeground(new Color(0x2d6a4f));
         title.setBounds(120, 10, 400, 50);
 
-        JLabel l1 = new JLabel("Customer ID:");
+        // FIXED: Updated label text from "Customer ID:" to "Appointment ID:"
+        JLabel l1 = new JLabel("Appointment ID:");
         l1.setBounds(100, 80, 150, 30);
 
         //textfield
@@ -40,30 +47,37 @@ public class FrameDeleteAppointment {
                 return;
             }
 
-            int appId;
+            String appId = t1.getText().trim();
 
-            try {
-                appId = Integer.parseInt(t1.getText());
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(frame, "Appointment ID must be a number!");
+            boolean found = false;
+            List<String> remainingAppointments = new ArrayList<>();
+
+            try (BufferedReader br = new BufferedReader(new FileReader("data/appointments.txt"))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                   
+                    String[] parts = line.split(":");
+                    if (parts.length > 0 && parts[0].trim().equals(appId)) {
+                        found = true;
+                    } else {
+                        remainingAppointments.add(line);
+                    }
+                }
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(frame, "Error reading appointment file!");
                 return;
             }
 
-            boolean found = false;
-
-            for (int i = 0; i < DataStored.appointments.size(); i++) {
-
-                if (DataStored.appointments.get(i).customer.cus_id == appId) {
-
-                    DataStored.appointments.remove(i);
-
+            if (found) {
+                try (FileWriter fw = new FileWriter("data/appointments.txt", false)) {
+                    for (String appLine : remainingAppointments) {
+                        fw.write(appLine + "\n");
+                    }
                     JOptionPane.showMessageDialog(frame, "Appointment Deleted!");
-                    found = true;
-                    break;
+                } catch (IOException ex) {
+                    JOptionPane.showMessageDialog(frame, "Error updating appointment file!");
                 }
-            }
-
-            if (!found) {
+            } else {
                 JOptionPane.showMessageDialog(frame, "Appointment not found!");
             }
         });
@@ -71,4 +85,4 @@ public class FrameDeleteAppointment {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setVisible(true);
     }
-} 
+}
