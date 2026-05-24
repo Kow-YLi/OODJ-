@@ -1,3 +1,1 @@
-APT0921:CU080119:2026-01-15:1130:Tyre Replacement:Completed
-APT1001:CU080119:2026-05-20:1030:Oil Change:Pending
-APT1002:CU080119:2026-06-05:1600:Normal Checking:Assigned
+A1001:CU080119:Tyre Replacement:Completed:2026-01-15 1130:TE001
