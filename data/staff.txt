@@ -1,0 +1,2 @@
+ST001:staff123:Ginny:ginny@gmail.com:0124571239
+ST002:staff456:Jane Lim:jane@gmail.com:0163344556
